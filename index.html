@@ -170,11 +170,14 @@
 </head>
 
 <body>
-    <!-- Local music file: put music.mp3 next to this HTML file -->
+    <!-- Music: YouTube (primary) + MP3 fallback -->
+    <div id="ytPlayer" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;"></div>
+    <script src="https://www.youtube.com/iframe_api"></script>
+
     <audio id="bgMusic" src="" loop></audio>
 
     <!-- Small helper if autoplay is blocked by the browser -->
-    <button id="musicBtn" class="white" style="position:fixed;right:16px;bottom:16px;z-index:9999;display:block;">▶️ Музыканы қосу</button>
+    <button id="musicBtn" class="white" style="position:fixed;right:16px;bottom:16px;z-index:9999;display:block;">▶️ Музыканы қосу (YouTube)</button>
     <div class="card">
         <h1>8 наурыз құтты болсын бұл сіздердің мейрамдарыңыз ! 🌷</h1>
         <div class="info">
@@ -234,43 +237,113 @@
         setInterval(updateRealtime, 1000);
         updateRealtime();
 
-        // ===== Background music (local file or direct URL) =====
+        // ===== Background music (YouTube primary, MP3 fallback) =====
         const musicBtn = document.getElementById("musicBtn");
         const bgMusic = document.getElementById("bgMusic");
 
-        // Put here a DIRECT mp3 link (must end with .mp3)
-        // Example for GitHub Pages: https://USERNAME.github.io/REPO/music.mp3
-        const MUSIC_URL = "https://ramazan1355.github.io/8-march/music.mp3";
+        // 1) YouTube settings (put your YouTube link's ID here)
+        // Example link: https://youtu.be/i8ZyxhIx4o8  -> ID is i8ZyxhIx4o8
+        const YT_VIDEO_ID = "i8ZyxhIx4o8";
+        let ytPlayer = null;
+        let ytReady = false;
+
+        // 2) MP3 fallback (direct .mp3 link)
+        const MUSIC_URL = ""; // optional: put direct .mp3 link here if you have one
 
         if (bgMusic && MUSIC_URL) {
             bgMusic.src = MUSIC_URL;
             bgMusic.load();
         }
 
-        // Show if the file fails to load
-        if (bgMusic) {
-            bgMusic.addEventListener("error", () => {
-                musicBtn.style.display = "block";
-                alert("Музыка жүктелмеді. Сілтеме (URL) тікелей .mp3 болуы керек және ашылуы керек.\nМысал: https://USERNAME.github.io/REPO/music.mp3");
-            });
+        let ytApiReady = false;
+        window.onYouTubeIframeAPIReady = function () {
+            ytApiReady = true;
+            // We create the player on the first user click for reliable sound.
+        };
+
+        function createYouTubePlayerWithSound() {
+            if (!ytApiReady || ytPlayer) return;
+            try {
+                ytPlayer = new YT.Player("ytPlayer", {
+                    videoId: YT_VIDEO_ID,
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 0,
+                        loop: 1,
+                        playlist: YT_VIDEO_ID,
+                        modestbranding: 1,
+                        playsinline: 1
+                    },
+                    events: {
+                        onReady: (e) => {
+                            ytReady = true;
+                            try {
+                                e.target.unMute();
+                                e.target.setVolume(80);
+                                e.target.playVideo();
+                            } catch (_) {}
+                        },
+                        onError: () => {
+                            ytReady = false;
+                        }
+                    }
+                });
+            } catch (_) {
+                ytReady = false;
+            }
         }
 
-        async function startMusic() {
+        async function startFallbackMp3() {
             if (!bgMusic) return;
             try {
                 bgMusic.volume = 0.8;
                 await bgMusic.play();
                 musicBtn.style.display = "none";
             } catch (e) {
-                // Autoplay is blocked until user interaction; keep button visible
                 musicBtn.style.display = "block";
             }
         }
 
-        // Try once (may be blocked), then start on first click
-        startMusic();
+        function enableYouTubeSound() {
+            // Create player on demand (first click)
+            if (!ytPlayer) {
+                createYouTubePlayerWithSound();
+            }
+            if (!ytReady || !ytPlayer) return false;
+            try {
+                ytPlayer.unMute();
+                ytPlayer.setVolume(80);
+                ytPlayer.playVideo();
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        async function startMusic() {
+            // Try YouTube first
+            const ok = enableYouTubeSound();
+            if (ok) {
+                // Stop MP3 if it was playing
+                try { bgMusic.pause(); } catch (_) {}
+                musicBtn.style.display = "none";
+                return;
+            }
+            // Fallback to MP3
+            await startFallbackMp3();
+        }
+
+        // Try to start (muted YT will start in onReady). Sound needs a click.
+        musicBtn.style.display = "block";
         musicBtn.addEventListener("click", startMusic);
         document.addEventListener("click", startMusic, { once: true });
+
+        // If MP3 fails, just keep the button (no popup)
+        if (bgMusic) {
+            bgMusic.addEventListener("error", () => {
+                musicBtn.style.display = "block";
+            });
+        }
 
         function showGift() {
             // Light animation only when the invitation appears
