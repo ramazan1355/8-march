@@ -9,11 +9,13 @@
         body {
             margin: 0;
             min-height: 100vh;
-            display: grid;
-            place-items: center;
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #ffd1e8, #d7f2ff, #fff2d6);
-            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px 12px;
+            overflow-y: auto;
         }
         
         .card {
@@ -25,6 +27,9 @@
             text-align: center;
             position: relative;
             z-index: 2;
+            margin: 0 auto;
+            max-height: calc(100vh - 48px);
+            overflow: auto;
         }
         
         h1 {
@@ -143,11 +148,6 @@
             z-index: 2;
         }
 
-        /* Make body a bit safer for fixed canvas */
-        body {
-            overflow: hidden;
-        }
-
         .gift-petal {
             position: fixed;
             top: -20px;
@@ -173,14 +173,22 @@
     <!-- Small helper if autoplay is blocked by the browser -->
     <button id="musicBtn" class="white" style="position:fixed;right:16px;bottom:16px;z-index:9999;display:block;">▶️ Музыканы қосу (Spotify)</button>
 
-    <!-- Spotify player (user must press Play) -->
-    <iframe
-        id="spotifyPlayer"
-        style="border-radius:12px; width: 320px; height: 152px; position: fixed; left: 16px; bottom: 16px; z-index: 9999; border: 0;"
-        src="https://open.spotify.com/embed/track/04ItP2o6hcGGcDUnKMbBic"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-        loading="lazy">
-    </iframe>
+    <!-- Spotify player (Safari may require pressing Play + allowing cross‑site media) -->
+    <div style="display:flex;justify-content:center;margin:12px 0 0;">
+        <iframe
+            id="spotifyPlayer"
+            style="border-radius:12px; width: min(520px, 92vw); height: 152px; border: 0;"
+            src="https://open.spotify.com/embed/track/04ItP2o6hcGGcDUnKMbBic"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy">
+        </iframe>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin:10px 0 6px;">
+        <a id="spotifyLink" href="https://open.spotify.com/track/04ItP2o6hcGGcDUnKMbBic" target="_blank" rel="noopener" style="background:#ffffff;border-radius:14px;padding:10px 14px;text-decoration:none;font-weight:bold;box-shadow:0 10px 20px rgba(0,0,0,0.12);color:#111;">
+            🎵 Spotify-ды ашу
+        </a>
+    </div>
 
     <div class="card">
         <h1>8 наурыз құтты болсын бұл сіздердің мейрамдарыңыз ! 🌷</h1>
@@ -247,10 +255,10 @@
 
         function openSpotifyTip() {
             if (spotifyPlayer) {
-                // Move attention to the player
-                spotifyPlayer.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+                spotifyPlayer.scrollIntoView({ behavior: "smooth", block: "center" });
             }
-            alert("Spotify-да музыка автоматты қосылмайды. Төмендегі Spotify плеерде ▶️ Play басыңыз.");
+            // Safari often blocks third‑party embeds until user allows it
+            alert("Музыка Spotify арқылы. Төмендегі плеерде ▶️ Play басыңыз. Егер ойнамаса: Safari → Settings → Privacy → ‘Prevent Cross‑Site Tracking’ өшіріп көріңіз немесе ‘🎵 Spotify-ды ашу’ сілтемесін басыңыз.");
         }
 
         if (musicBtn) {
