@@ -13,8 +13,8 @@
             background: linear-gradient(135deg, #ffd1e8, #d7f2ff, #fff2d6);
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            padding: 24px 12px;
+            align-items: center;
+            padding: 24px 12px 220px; /* bottom space for floating player */
             overflow-y: auto;
         }
         
@@ -28,8 +28,6 @@
             position: relative;
             z-index: 2;
             margin: 0 auto;
-            max-height: calc(100vh - 48px);
-            overflow: auto;
         }
         
         h1 {
@@ -142,12 +140,6 @@
             opacity: 0.8;
         }
 
-        /* Ensure the card stays above the animation */
-        .card {
-            position: relative;
-            z-index: 2;
-        }
-
         .gift-petal {
             position: fixed;
             top: -20px;
@@ -166,6 +158,77 @@
                 opacity: 0;
             }
         }
+
+        /* Floating Spotify player (под боком) */
+        #spotifyPlayer {
+            position: fixed;
+            left: 16px;
+            bottom: 16px;
+            width: min(360px, 92vw);
+            height: 152px;
+            border: 0;
+            border-radius: 12px;
+            z-index: 9999;
+            background: #fff;
+        }
+
+        #spotifyLink {
+            position: fixed;
+            left: 16px;
+            bottom: 178px;
+            z-index: 9999;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 10px 14px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+            color: #111;
+        }
+
+        /* Mobile: center the floating player */
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+                padding-top: 18px;
+            }
+            #spotifyPlayer,
+            #spotifyLink {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            #spotifyPlayer {
+                width: min(420px, 92vw);
+            }
+        }
+
+        /* Lighter on phones */
+        @media (max-width: 520px) {
+            .card {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 30px;
+            }
+            p {
+                font-size: 16px;
+            }
+            .gift-petal {
+                width: 12px;
+                height: 16px;
+            }
+        }
+
+        /* Respect accessibility: reduce motion */
+        @media (prefers-reduced-motion: reduce) {
+            .gift-petal {
+                animation: none !important;
+                display: none !important;
+            }
+            .modal-card {
+                transition: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -173,22 +236,14 @@
     <!-- Small helper if autoplay is blocked by the browser -->
     <button id="musicBtn" class="white" style="position:fixed;right:16px;bottom:16px;z-index:9999;display:block;">▶️ Музыканы қосу (Spotify)</button>
 
-    <!-- Spotify player (Safari may require pressing Play + allowing cross‑site media) -->
-    <div style="display:flex;justify-content:center;margin:12px 0 0;">
-        <iframe
-            id="spotifyPlayer"
-            style="border-radius:12px; width: min(520px, 92vw); height: 152px; border: 0;"
-            src="https://open.spotify.com/embed/track/04ItP2o6hcGGcDUnKMbBic"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy">
-        </iframe>
-    </div>
+    <a id="spotifyLink" href="https://open.spotify.com/track/04ItP2o6hcGGcDUnKMbBic" target="_blank" rel="noopener">🎵 Spotify-ды ашу</a>
 
-    <div style="display:flex;justify-content:center;margin:10px 0 6px;">
-        <a id="spotifyLink" href="https://open.spotify.com/track/04ItP2o6hcGGcDUnKMbBic" target="_blank" rel="noopener" style="background:#ffffff;border-radius:14px;padding:10px 14px;text-decoration:none;font-weight:bold;box-shadow:0 10px 20px rgba(0,0,0,0.12);color:#111;">
-            🎵 Spotify-ды ашу
-        </a>
-    </div>
+    <iframe
+        id="spotifyPlayer"
+        src="https://open.spotify.com/embed/track/04ItP2o6hcGGcDUnKMbBic"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy">
+    </iframe>
 
     <div class="card">
         <h1>8 наурыз құтты болсын бұл сіздердің мейрамдарыңыз ! 🌷</h1>
@@ -254,11 +309,12 @@
         const spotifyPlayer = document.getElementById("spotifyPlayer");
 
         function openSpotifyTip() {
-            if (spotifyPlayer) {
-                spotifyPlayer.scrollIntoView({ behavior: "smooth", block: "center" });
+            const link = document.getElementById("spotifyLink");
+            // Open Spotify in a new tab (works better on Safari)
+            if (link && link.href) {
+                window.open(link.href, "_blank");
             }
-            // Safari often blocks third‑party embeds until user allows it
-            alert("Музыка Spotify арқылы. Төмендегі плеерде ▶️ Play басыңыз. Егер ойнамаса: Safari → Settings → Privacy → ‘Prevent Cross‑Site Tracking’ өшіріп көріңіз немесе ‘🎵 Spotify-ды ашу’ сілтемесін басыңыз.");
+            alert("Музыка Spotify арқылы. Төмендегі плеерде ▶️ Play басыңыз немесе жаңа бетте Spotify ашылады.");
         }
 
         if (musicBtn) {
@@ -266,8 +322,11 @@
         }
 
         function showGift() {
-            // Light animation only when the invitation appears
-            for (let n = 0; n < 26; n++) {
+            const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isMobile = window.matchMedia && window.matchMedia('(max-width: 520px)').matches;
+            const petalCount = reduceMotion ? 0 : (isMobile ? 10 : 20);
+
+            for (let n = 0; n < petalCount; n++) {
                 const p = document.createElement("div");
                 p.className = "gift-petal";
                 p.style.left = (Math.random() * 100) + "vw";
@@ -275,7 +334,7 @@
                 p.style.opacity = (0.35 + Math.random() * 0.45);
                 p.style.transform = `rotate(${Math.random() * 60}deg)`;
                 document.body.appendChild(p);
-                setTimeout(() => p.remove(), 7000);
+                setTimeout(() => p.remove(), 4500);
             }
 
             const pick = invites[Math.floor(Math.random() * invites.length)];
