@@ -170,14 +170,18 @@
 </head>
 
 <body>
-    <!-- Music: YouTube (primary) + MP3 fallback -->
-    <div id="ytPlayer" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;"></div>
-    <script src="https://www.youtube.com/iframe_api"></script>
-
-    <audio id="bgMusic" src="" loop></audio>
-
     <!-- Small helper if autoplay is blocked by the browser -->
-    <button id="musicBtn" class="white" style="position:fixed;right:16px;bottom:16px;z-index:9999;display:block;">▶️ Музыканы қосу (YouTube)</button>
+    <button id="musicBtn" class="white" style="position:fixed;right:16px;bottom:16px;z-index:9999;display:block;">▶️ Музыканы қосу (Spotify)</button>
+
+    <!-- Spotify player (user must press Play) -->
+    <iframe
+        id="spotifyPlayer"
+        style="border-radius:12px; width: 320px; height: 152px; position: fixed; left: 16px; bottom: 16px; z-index: 9999; border: 0;"
+        src="https://open.spotify.com/embed/track/04ItP2o6hcGGcDUnKMbBic"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy">
+    </iframe>
+
     <div class="card">
         <h1>8 наурыз құтты болсын бұл сіздердің мейрамдарыңыз ! 🌷</h1>
         <div class="info">
@@ -237,112 +241,20 @@
         setInterval(updateRealtime, 1000);
         updateRealtime();
 
-        // ===== Background music (YouTube primary, MP3 fallback) =====
+        // ===== Music (Spotify embed) =====
         const musicBtn = document.getElementById("musicBtn");
-        const bgMusic = document.getElementById("bgMusic");
+        const spotifyPlayer = document.getElementById("spotifyPlayer");
 
-        // 1) YouTube settings (put your YouTube link's ID here)
-        // Example link: https://youtu.be/i8ZyxhIx4o8  -> ID is i8ZyxhIx4o8
-        const YT_VIDEO_ID = "i8ZyxhIx4o8";
-        let ytPlayer = null;
-        let ytReady = false;
-
-        // 2) MP3 fallback (direct .mp3 link)
-        const MUSIC_URL = ""; // optional: put direct .mp3 link here if you have one
-
-        if (bgMusic && MUSIC_URL) {
-            bgMusic.src = MUSIC_URL;
-            bgMusic.load();
+        function openSpotifyTip() {
+            if (spotifyPlayer) {
+                // Move attention to the player
+                spotifyPlayer.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+            }
+            alert("Spotify-да музыка автоматты қосылмайды. Төмендегі Spotify плеерде ▶️ Play басыңыз.");
         }
 
-        let ytApiReady = false;
-        window.onYouTubeIframeAPIReady = function () {
-            ytApiReady = true;
-            // We create the player on the first user click for reliable sound.
-        };
-
-        function createYouTubePlayerWithSound() {
-            if (!ytApiReady || ytPlayer) return;
-            try {
-                ytPlayer = new YT.Player("ytPlayer", {
-                    videoId: YT_VIDEO_ID,
-                    playerVars: {
-                        autoplay: 1,
-                        controls: 0,
-                        loop: 1,
-                        playlist: YT_VIDEO_ID,
-                        modestbranding: 1,
-                        playsinline: 1
-                    },
-                    events: {
-                        onReady: (e) => {
-                            ytReady = true;
-                            try {
-                                e.target.unMute();
-                                e.target.setVolume(80);
-                                e.target.playVideo();
-                            } catch (_) {}
-                        },
-                        onError: () => {
-                            ytReady = false;
-                        }
-                    }
-                });
-            } catch (_) {
-                ytReady = false;
-            }
-        }
-
-        async function startFallbackMp3() {
-            if (!bgMusic) return;
-            try {
-                bgMusic.volume = 0.8;
-                await bgMusic.play();
-                musicBtn.style.display = "none";
-            } catch (e) {
-                musicBtn.style.display = "block";
-            }
-        }
-
-        function enableYouTubeSound() {
-            // Create player on demand (first click)
-            if (!ytPlayer) {
-                createYouTubePlayerWithSound();
-            }
-            if (!ytReady || !ytPlayer) return false;
-            try {
-                ytPlayer.unMute();
-                ytPlayer.setVolume(80);
-                ytPlayer.playVideo();
-                return true;
-            } catch (_) {
-                return false;
-            }
-        }
-
-        async function startMusic() {
-            // Try YouTube first
-            const ok = enableYouTubeSound();
-            if (ok) {
-                // Stop MP3 if it was playing
-                try { bgMusic.pause(); } catch (_) {}
-                musicBtn.style.display = "none";
-                return;
-            }
-            // Fallback to MP3
-            await startFallbackMp3();
-        }
-
-        // Try to start (muted YT will start in onReady). Sound needs a click.
-        musicBtn.style.display = "block";
-        musicBtn.addEventListener("click", startMusic);
-        document.addEventListener("click", startMusic, { once: true });
-
-        // If MP3 fails, just keep the button (no popup)
-        if (bgMusic) {
-            bgMusic.addEventListener("error", () => {
-                musicBtn.style.display = "block";
-            });
+        if (musicBtn) {
+            musicBtn.addEventListener("click", openSpotifyTip);
         }
 
         function showGift() {
