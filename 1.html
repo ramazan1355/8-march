@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="kz">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>8 Наурыз құтты болсын! 🌷</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ffd1e8, #d7f2ff, #fff2d6);
+            overflow: hidden;
+        }
+        
+        .card {
+            width: min(700px, 92vw);
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        h1 {
+            margin: 0 0 10px;
+            font-size: 40px;
+        }
+        
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        button {
+            border: 0;
+            padding: 12px 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 8px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .pink {
+            background: #ff4d8d;
+            color: white;
+        }
+        
+        .white {
+            background: white;
+        }
+        
+        .wish {
+            margin-top: 14px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 14px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .info {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 14px 0 6px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .pill {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 999px;
+            padding: 6px 10px;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            z-index: 9997;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(560px, 92vw);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 22px;
+            padding: 18px 18px 16px;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+            text-align: left;
+            transform: scale(0.96);
+            opacity: 0;
+            transition: 0.22s ease;
+        }
+
+        .modal.show .modal-card {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-card h2 {
+            margin: 0 0 8px;
+            font-size: 22px;
+        }
+
+        .modal-card p {
+            margin: 8px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .small {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        /* Ensure the card stays above the animation */
+        .card {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Make body a bit safer for fixed canvas */
+        body {
+            overflow: hidden;
+        }
+
+        .gift-petal {
+            position: fixed;
+            top: -20px;
+            width: 14px;
+            height: 18px;
+            border-radius: 14px;
+            background: rgba(255, 77, 141, 0.45);
+            z-index: 9998;
+            pointer-events: none;
+            animation: giftFall linear forwards;
+        }
+
+        @keyframes giftFall {
+            to {
+                transform: translateY(110vh) rotate(320deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Local music file: put music.mp3 next to this HTML file -->
+    <audio id="bgMusic" src="music.mp3" loop></audio>
+
+    <!-- Small helper if autoplay is blocked by the browser -->
+    <button id="musicBtn" class="white" style="position:fixed;right:16px;bottom:16px;z-index:9999;display:block;">▶️ Музыканы қосу</button>
+    <div class="card">
+        <h1>8 наурыз құтты болсын бұл сіздердің мейрамдарыңыз ! 🌷</h1>
+        <div class="info">
+            <span class="pill">⏰ Қазір: <b id="nowTime">--:--:--</b></span>
+            <span class="pill">🖱️ Нажатия: <b id="clicks">0</b></span>
+            <span class="pill">⏳ Өткен уақыт: <b id="elapsed">00:00</b></span>
+        </div>
+        <p id="text">
+            Бұл күн жылы, әдемі және күлкіге толы болсын ! 🌷<br> Сізге бақыт, денсаулық және тілектердің орындалуын тілеймін ✨
+        </p>
+
+        <button class="pink" onclick="surprise()">Сюрприз 🎁</button>
+        <button class="white" onclick="addName()">Есіміңізді жазыңыз</button>
+
+        <div id="wishes"></div>
+    </div>
+
+    <script>
+        const list = [
+           "Әр күн қуаныш әкелсін😊",
+            "Армандарыңыз оңай орындалсын✨",
+            "Жақындарыңыз қасыңда болсын💞",
+            "Шабыт пен сәттілік болсын🌟",
+            "Әрқашан бақытты болыңыз🌸"
+        ];
+        let i = 0;
+        let pressCount = 0;
+        const startTime = Date.now();
+
+        const invites = [
+            { place: "Үйде күтеміз", time: "00:00" }
+        ];
+
+        function pad2(n) { return String(n).padStart(2, "0"); }
+
+        function updateRealtime() {
+            const now = new Date();
+            const hh = pad2(now.getHours());
+            const mm = pad2(now.getMinutes());
+            const ss = pad2(now.getSeconds());
+            const nowStr = `${hh}:${mm}:${ss}`;
+
+            const diff = Date.now() - startTime;
+            const totalSec = Math.floor(diff / 1000);
+            const m = pad2(Math.floor(totalSec / 60));
+            const s = pad2(totalSec % 60);
+
+            const nowEl = document.getElementById("nowTime");
+            const elapsedEl = document.getElementById("elapsed");
+            const clicksEl = document.getElementById("clicks");
+
+            if (nowEl) nowEl.textContent = nowStr;
+            if (elapsedEl) elapsedEl.textContent = `${m}:${s}`;
+            if (clicksEl) clicksEl.textContent = String(pressCount);
+        }
+
+        setInterval(updateRealtime, 1000);
+        updateRealtime();
+
+        // ===== Background music (local file) =====
+        const musicBtn = document.getElementById("musicBtn");
+        const bgMusic = document.getElementById("bgMusic");
+
+        async function startMusic() {
+            if (!bgMusic) return;
+            try {
+                bgMusic.volume = 0.8;
+                await bgMusic.play();
+                musicBtn.style.display = "none";
+            } catch (e) {
+                // Autoplay is blocked until user interaction; keep button visible
+                musicBtn.style.display = "block";
+            }
+        }
+
+        // Try once (may be blocked), then start on first click
+        startMusic();
+        musicBtn.addEventListener("click", startMusic);
+        document.addEventListener("click", startMusic, { once: true });
+
+        function showGift() {
+            // Light animation only when the invitation appears
+            for (let n = 0; n < 26; n++) {
+                const p = document.createElement("div");
+                p.className = "gift-petal";
+                p.style.left = (Math.random() * 100) + "vw";
+                p.style.animationDuration = (3.2 + Math.random() * 2.8) + "s";
+                p.style.opacity = (0.35 + Math.random() * 0.45);
+                p.style.transform = `rotate(${Math.random() * 60}deg)`;
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 7000);
+            }
+
+            const pick = invites[Math.floor(Math.random() * invites.length)];
+            const modal = document.getElementById("giftModal");
+            const text = document.getElementById("giftText");
+            const rt = document.getElementById("giftRealtime");
+
+            if (text) {
+                text.innerHTML = `🎉 Құттықтаймын! Сіз көп рет басып, жасырын сыйлық аштыңыз!<br><br>📩 Мен сізді <b>${pick.place}</b> деген жеріне шақырамын.<br>🕒 Уақыты: <b>${pick.time}</b>`;
+            }
+            if (rt) {
+                rt.textContent = `Нақты уақыттағы есеп: ${new Date().toLocaleString()} • Нажатия: ${pressCount}`;
+            }
+            if (modal) modal.classList.add("show");
+        }
+
+        function closeGift() {
+            const modal = document.getElementById("giftModal");
+            if (modal) modal.classList.remove("show");
+        }
+
+        function acceptGift() {
+            const modal = document.getElementById("giftModal");
+            if (modal) modal.classList.remove("show");
+            alert("Керемет!Сізді керемет сыйлық күтіп тұр сүйікті ұлыңыздан сіз тек 00:00  үйде болыңыз 😄");
+        }
+
+        function surprise() {
+            pressCount++;
+            const box = document.getElementById("wishes");
+            const div = document.createElement("div");
+            div.className = "wish";
+            div.textContent = "• " + (list[i] || "Мейрамыңызбен тағы да! 💗");
+            box.appendChild(div);
+            // Limit wishes to avoid heavy DOM (keeps last 20)
+            while (box.children.length > 20) {
+                box.removeChild(box.firstElementChild);
+            }
+            if (i < list.length) i++;
+            // Сыйлық: әр 7-ші басқанда шақыру шығады (7, 14, 21, ...)
+            if (pressCount % 7 === 0) {
+                showGift();
+            }
+            updateRealtime();
+        }
+
+        function addName() {
+            const name = prompt("Кімді құттықтаймыз? (мысалы: Анашым / Мама)");
+            if (name && name.trim()) {
+                document.getElementById("text").innerHTML =
+                    `Құрметті <b>${name.trim()}</b>! 💐<br>Әр күннен шаттанып,қуат алып жүріңіздер,ауыздарыңыздан күлкі түспесін 💖<br>Сіздерге тек бақыт және денсаулық ғана тілейміз ✨`;
+            }
+        }
+
+        // Модалдың сырт жағын басса, жабылады
+        document.addEventListener("click", (e) => {
+            const modal = document.getElementById("giftModal");
+            if (!modal) return;
+            if (modal.classList.contains("show") && e.target === modal) {
+                closeGift();
+            }
+        });
+    </script>
+
+    <div class="modal" id="giftModal" role="dialog" aria-modal="true">
+        <div class="modal-card">
+            <h2 id="giftTitle">🎁 Сыйлық!</h2>
+            <p id="giftText"></p>
+            <p class="small" id="giftRealtime"></p>
+            <div class="modal-actions">
+                <button class="white" onclick="closeGift()">Жабу</button>
+                <button class="pink" onclick="acceptGift()">Келемін ✅</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
